@@ -48,6 +48,6 @@ def get_feature_types(X: pd.DataFrame) -> tuple[list[str], list[str]]:
     """
     Return numeric and categorical feature lists.
     """
-    numeric_features = X.select_dtypes(include=["int64", "float64"]).columns.tolist()
+    numeric_features = X.select_dtypes(include="number").columns.tolist()
     categorical_features = X.select_dtypes(include="object").columns.tolist()
     return numeric_features, categorical_features
