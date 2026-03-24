@@ -100,7 +100,7 @@ curl -X POST http://127.0.0.1:8000/predict \
 ```json
 {
   "churn_prediction": 1,
-  "churn_probability": 0.9073,
+  "churn_probability": 0.8354,
   "risk_tier": "High"
 }
 ```
