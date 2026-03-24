@@ -4,10 +4,15 @@ __pycache__/
 *$py.class
 
 artifacts/
+!artifacts/models/best_model.joblib
+!artifacts/metrics/train_metrics.json
+
 __pycache__/
 .ipynb_checkpoints/
 *.pkl
 *.joblib
+
+data/scored/
 
 # C extensions
 *.so

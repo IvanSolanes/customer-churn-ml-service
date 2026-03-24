@@ -17,45 +17,137 @@ This repository will include:
 - an API for predictions
 - batch scoring workflow
 
-## Current status
-
-Initial project structure has been created and the raw dataset has been added.
-
 ## Dataset
 
 This project currently uses the raw churn dataset stored in `data/raw/Telco-Customer-Churn.csv`.
 
-The raw file is kept unchanged. Data cleaning, preprocessing, and feature preparation will be implemented in later steps.
+## Quickstart
 
-## Training pipeline
+### 1. Clone and install
 
-Run the training workflow from the project root:
+```bash
+git clone https://github.com/IvanSolanes/customer-churn-ml-service.git
+cd customer-churn-ml-service
+python -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+### 2. Train the model
 
 ```bash
 python -m src.training.train_model
 ```
-This script:
 
-compares candidate base models with repeated cross-validation,
-applies a tie-aware model selection rule,
-selects the best probability version using training data only,
-saves the final selected model to artifacts/models/best_model.joblib,
-and writes training metrics to artifacts/metrics/train_metrics.json.
+This will:
+- compare a dummy baseline, logistic regression, and random forest using repeated stratified cross-validation,
+- apply a tie-aware model selection rule (prefers logistic regression when the ROC-AUC gap is negligible),
+- select the best probability calibration version (uncalibrated, sigmoid, or isotonic) using out-of-fold evaluation on training data only,
+- save the final model to `artifacts/models/best_model.joblib`,
+- write training metrics to `artifacts/metrics/train_metrics.json`.
 
+### 3. Start the API
 
-
-## Requirements
-- Python 3.12
-- Install dependencies: `pip install -r requirements.txt`
+```bash
+uvicorn src.api.main:app --reload
 ```
+
+The API will be live at `http://127.0.0.1:8000`.  
+Interactive docs: `http://127.0.0.1:8000/docs`
 
 ---
 
-## 4. Pin pandas to a Compatible Version in `requirements.txt`
+## API endpoints
 
-Fix the root cause you just experienced for future users:
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/health` | Service health check |
+| `POST` | `/predict` | Single-customer churn prediction |
+| `POST` | `/predict/batch` | Batch prediction (up to 5,000 customers) |
+
+### Example — single prediction
+
+**Request**
+
+```bash
+curl -X POST http://127.0.0.1:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "gender": "Male",
+    "SeniorCitizen": 0,
+    "Partner": "Yes",
+    "Dependents": "No",
+    "tenure": 5,
+    "Contract": "Month-to-month",
+    "PaperlessBilling": "Yes",
+    "PaymentMethod": "Electronic check",
+    "MonthlyCharges": 70.35,
+    "TotalCharges": 351.75,
+    "PhoneService": "Yes",
+    "MultipleLines": "No",
+    "InternetService": "Fiber optic",
+    "OnlineSecurity": "No",
+    "OnlineBackup": "No",
+    "DeviceProtection": "No",
+    "TechSupport": "No",
+    "StreamingTV": "Yes",
+    "StreamingMovies": "Yes"
+  }'
 ```
-pandas>=2.2.2,<3.0
-scikit-learn>=1.3
-joblib>=1.3
+
+**Response**
+
+```json
+{
+  "churn_prediction": 1,
+  "churn_probability": 0.9073,
+  "risk_tier": "High"
+}
+```
+
+The `risk_tier` field maps probabilities to business-friendly buckets:
+- `Low` — below 0.35
+- `Medium` — 0.35 to 0.60
+- `High` — above 0.60
+
+---
+
+## Batch scoring (offline)
+
+Score a full CSV file without the API:
+
+```bash
+python scripts/batch_score.py \
+  --input  data/raw/Telco-Customer-Churn.csv \
+  --output data/scored/scored_customers.csv
+```
+
+Output CSV contains `customerID`, `churn_prediction`, `churn_probability`, and `risk_tier` for every row. Useful for periodic bulk runs or retention campaign targeting.
+
+---
+
+## Model selection logic
+
+The training pipeline applies a **tie-aware selection rule**: if the ROC-AUC
+gap between the top two models is smaller than 0.001, logistic regression is
+preferred. This reflects a deliberate trade-off — logistic regression is
+faster, more interpretable, and easier to audit, making it preferable over a
+marginally better but more opaque model in a business context.
+
+Probability calibration is selected separately using out-of-fold Brier score
+on the training set only, keeping the holdout set fully unseen until final
+evaluation.
+
+---
+
+## Requirements
+
+```
+Python 3.12
+```
+
+Install all dependencies:
+
+```bash
+pip install -r requirements.txt
 ```
