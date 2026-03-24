@@ -3,6 +3,12 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+artifacts/
+__pycache__/
+.ipynb_checkpoints/
+*.pkl
+*.joblib
+
 # C extensions
 *.so
 

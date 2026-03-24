@@ -1,0 +1,8 @@
+[project]
+name = "customer-churn-ml-service"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
