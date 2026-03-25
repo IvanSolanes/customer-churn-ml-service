@@ -1,6 +1,6 @@
 # Customer Churn ML Service
 
-![CI](https://github.com/IvanSolanes/customer-churn-ml-service/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/IvanSolanes/customer-churn-ml-service/actions/workflows/ci.yml/badge.svg)git add README.md
 
 End-to-end machine learning project to predict customer churn for a subscription-style business.
 
